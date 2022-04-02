@@ -1,15 +1,27 @@
 
 /*
- * HID RFID Reader for HID PIVclass recognition with 
- * scaffolding to read keypad code. Modified to include
- * keypad reading.
- * 
- * Please change the bits to match your model if the below example
- * does not correlate to your reader's keys.
+
+You may need to change the bits for keypresses for your model.
+
+* HID RED PIN: D12
+* HID GREEN PIN: D11
+* BEEP PIN: D10
+D0: Digital2
+D1: Digital3
+VCC: 5v
+GND: GND
+
+1. Scan a valid card. If card is valid, LED will be steady yellow. If card is invalid, LED will be yellow for a sec then
+turn red again.
+
+2. Enter password (default 2580). Press the # Key to accept password. Press the * Key to reset password or entire sequence.
+
+3. Reader will turn GREEN and LONG BEEP and automatically reset.
+
 */
  
  
-#define MAX_BITS 100                 
+#define MAX_BITS 100                 // max number of bits 
 #define WEIGAND_WAIT_TIME  3000      // time to wait for another weigand pulse.  
  
 unsigned char databits[MAX_BITS];    // stores all of the data bits
@@ -17,12 +29,12 @@ unsigned char bitCount;              // number of bits currently captured
 unsigned char flagDone;              // goes low when data is currently being captured
 unsigned int weigand_counter;        // countdown until we assume there are no more bits
  
-unsigned long facilityCode=0;        
-unsigned long cardCode=0;            
+unsigned long facilityCode=0;        // decoded facility code
+unsigned long cardCode=0;            // decoded card code
 
-int LED_GREEN = 11; //Connect RED to LED_GREEN
-int LED_RED = 12; // CONNECT GREEN to LED_RED
-int BEEP_BEEP = 10; //Buzzer
+int LED_GREEN = 11;
+int LED_RED = 12;
+int BEEP_BEEP = 10;
 
 // interrupt that happens when INTO goes low (0 bit)
 void ISR_INT0() {
@@ -53,7 +65,7 @@ void setup() {
   pinMode(3, INPUT);     // DATA1 (INT1)
  
   Serial.begin(9600);
-  Serial.println("Loaded RFID Reader");
+  Serial.println("RFID Readers");
  
   // binds the ISR functions to the falling edge of INTO and INT1
   attachInterrupt(0, ISR_INT0, FALLING);  
@@ -61,8 +73,17 @@ void setup() {
  
  
   weigand_counter = WEIGAND_WAIT_TIME;
+
+  //Set Red
+  digitalWrite(LED_GREEN, HIGH);  // Green Off
+  digitalWrite(LED_RED, LOW);  // Red Back On
 }
- 
+
+String keySequence;
+bool acceptCard;
+bool acceptKey;
+
+
 void loop()
 {
   // This waits to make sure that there have been no more data pulses before processing data
@@ -114,6 +135,7 @@ void loop()
     else if (bitCount == 8) {
       Serial.println("Detected Key Press");
       String dbits;
+
       
      
       //Concat String
@@ -123,52 +145,95 @@ void loop()
       }
        Serial.println("Registered Key: " + dbits);
   
-      
+       //Prepare switch statement
+       enum PossibleBits { UNDEF, RED, ORANGE, YELLOW, GREEN,  BLUE, PURPLE };
        
        if (dbits == "00111100") {
          // do Thing A
          Serial.println("Registered Key Press: 1");
+         keySequence += "1";
       }
        else if (dbits == "01011010") {
       Serial.println("Registered Key Press: 2");
+      keySequence += "2";
       }
        else if (dbits == "01111000") {
        Serial.println("Registered Key Press: 3");
+       keySequence += "3";
       }
        else if (dbits == "10010110") {
      Serial.println("Registered Key Press: 4");
+     keySequence += "4";
       }
        else if (dbits == "10110100") {
        Serial.println("Registered Key Press: 5");
+       keySequence += "5";
       }
        else if (dbits == "11010010") {
        Serial.println("Registered Key Press: 6");
+       keySequence += "6";
       }
        else if (dbits == "11110000") {
      Serial.println("Registered Key Press: 7");
+     keySequence += "7";
       }
        else if (dbits == "00001110") {
        Serial.println("Registered Key Press: 8");
+       keySequence += "8";
       }
        else if (dbits == "00101100") {
        Serial.println("Registered Key Press: 9");
+       keySequence += "9";
       }
        else if (dbits == "00011110") {
        Serial.println("Registered Key Press: 0");
+       keySequence += "0";
       }
        else if (dbits == "01001010") {
        Serial.println("Registered Key Press: * ");
+       acceptCard = false;
+       keySequence = "";
+        digitalWrite(LED_GREEN, HIGH);  // Green Off
+        digitalWrite(LED_RED, LOW);  // Red Back On
+       
       }
        else if (dbits == "01101000") {
       Serial.println("Registered Key Press: # ");
+      Serial.println("Key Sequence Entered:" + keySequence);
+
+      if(keySequence == "2580" && acceptCard == true) {
+        //Code is correct
+        Serial.println("### User Authenticated");
+        keySequence = "";
+        digitalWrite(BEEP_BEEP, LOW);
+        //Make Color Green
+        digitalWrite(LED_RED, HIGH);
+        digitalWrite(LED_GREEN, LOW);
+
+        
+        delay(1000);
+        digitalWrite(BEEP_BEEP, HIGH);
+        //Make Color Red
+        digitalWrite(LED_GREEN, HIGH);  // Green Off
+        digitalWrite(LED_RED, LOW);  // Red Back On
+        
+        acceptCard = false;
+      } else {
+        keySequence = "";
+        Serial.println("Authentication Key Sequence Failed. Resetting");
+        acceptCard = false;
+         digitalWrite(LED_GREEN, HIGH);  // Green Off
+        digitalWrite(LED_RED, LOW);  // Red Back On
+      }
+      
       }
       else {
       Serial.println("unrecognized pinpad press");
     }
     }
     else {
-
-     Serial.println("Unable to decode input. Please reswipe card"); 
+     // you can add other formats if you want!
+     Serial.println("Unable to decode."); 
     }
  
      // cleanup and get ready for the next card
@@ -177,31 +242,34 @@ void loop()
      cardCode = 0;
      for (i=0; i<MAX_BITS; i++) 
      {
-      //RESET DATABITS
        databits[i] = 0;
      }
   }
 }
  
 void printBits() {
-      Serial.print("Facility Code = ");
+      Serial.print("FacCc = ");
       Serial.print(facilityCode);
-      Serial.print(", Card Code = ");
+      Serial.print(", CardCc = ");
       Serial.println(cardCode);
 
 
-      digitalWrite(LED_RED, LOW); // Red
+      digitalWrite(LED_GREEN, LOW); // Red
+      
+ //Set your accepted card code here
+      if(cardCode == 00000){
 
-      //Set an accepted card code here.
-      if(cardCode == 000000){
+         
+        acceptCard = true;
+        Serial.println("Card Accepted");
 
-        digitalWrite(LED_GREEN, HIGH); 
-
-        //Do whatever, open servo, etc.
+      } else {
+        acceptCard = false;
+        Serial.println("Card not accepted. Reset Vars");
+        delay(500);
+        digitalWrite(LED_GREEN, HIGH);  // Green Off
+      digitalWrite(LED_RED, LOW);  // Red Back On
       }
-      delay(500);
-      digitalWrite(LED_RED, HIGH);  // Red Off
-      digitalWrite(LED_GREEN, LOW);  // Green back on
 
       
 }
