@@ -9,6 +9,8 @@ bits to the console and change them accordingly.
 
 Tested on PIVClass Reader with while reading 8 bits from the key press.
 
-It is recommended to switch the color pins to produce red/orange on some models.
+## Important:
+If the indicator color is green while in standby mode, switch the leads for 'green' and 'red'.
+Normally, it should be read during standby, yellow (perodically) for a unrecognized keycard, and green (perodically) for a recognized keycard.
 
 Connection configuration is listed in source code.
