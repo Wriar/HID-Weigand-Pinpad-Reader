@@ -86,7 +86,7 @@ bool acceptKey;
 
 void loop()
 {
-  // This waits to make sure that there have been no more data pulses before processing data
+   // This waits to make sure that there have been no more data pulses before processing data
   if (!flagDone) {
     if (--weigand_counter == 0)
       flagDone = 1;  
@@ -148,48 +148,48 @@ void loop()
        //Prepare switch statement
        enum PossibleBits { UNDEF, RED, ORANGE, YELLOW, GREEN,  BLUE, PURPLE };
        
-       if (dbits == "00111100") {
+       if (dbits == "11000010") {
          // do Thing A
          Serial.println("Registered Key Press: 1");
          keySequence += "1";
       }
-       else if (dbits == "01011010") {
+       else if (dbits == "10100100") {
       Serial.println("Registered Key Press: 2");
       keySequence += "2";
       }
-       else if (dbits == "01111000") {
+       else if (dbits == "10000110") {
        Serial.println("Registered Key Press: 3");
        keySequence += "3";
       }
-       else if (dbits == "10010110") {
+       else if (dbits == "01101000") {
      Serial.println("Registered Key Press: 4");
      keySequence += "4";
       }
-       else if (dbits == "10110100") {
+       else if (dbits == "01001010") {
        Serial.println("Registered Key Press: 5");
        keySequence += "5";
       }
-       else if (dbits == "11010010") {
+       else if (dbits == "00101100") {
        Serial.println("Registered Key Press: 6");
        keySequence += "6";
       }
-       else if (dbits == "11110000") {
+       else if (dbits == "00001110") {
      Serial.println("Registered Key Press: 7");
      keySequence += "7";
       }
-       else if (dbits == "00001110") {
+       else if (dbits == "11110000") {
        Serial.println("Registered Key Press: 8");
        keySequence += "8";
       }
-       else if (dbits == "00101100") {
+       else if (dbits == "11010010") {
        Serial.println("Registered Key Press: 9");
        keySequence += "9";
       }
-       else if (dbits == "00011110") {
+       else if (dbits == "11100000") {
        Serial.println("Registered Key Press: 0");
        keySequence += "0";
       }
-       else if (dbits == "01001010") {
+       else if (dbits == "10110100") {
        Serial.println("Registered Key Press: * ");
        acceptCard = false;
        keySequence = "";
@@ -197,7 +197,7 @@ void loop()
         digitalWrite(LED_RED, LOW);  // Red Back On
        
       }
-       else if (dbits == "01101000") {
+       else if (dbits == "10010110") {
       Serial.println("Registered Key Press: # ");
       Serial.println("Key Sequence Entered:" + keySequence);
 
