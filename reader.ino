@@ -35,6 +35,7 @@ unsigned long cardCode=0;            // decoded card code
 int LED_GREEN = 11;
 int LED_RED = 12;
 int BEEP_BEEP = 10;
+bool enterCode = false;
 
 // interrupt that happens when INTO goes low (0 bit)
 void ISR_INT0() {
@@ -87,9 +88,12 @@ bool acceptKey;
 void loop()
 {
    // This waits to make sure that there have been no more data pulses before processing data
+  noInterrupts(); 
+  weigand_counter--;
+  interrupts(); 
   if (!flagDone) {
-    if (--weigand_counter == 0)
-      flagDone = 1;  
+    if (weigand_counter == 0)  
+      flagDone = 1; 
   }
  
   // if we have bits and we the weigand counter went out
@@ -201,7 +205,7 @@ void loop()
       Serial.println("Registered Key Press: # ");
       Serial.println("Key Sequence Entered:" + keySequence);
 
-      if(keySequence == "2580" && acceptCard == true) {
+      if((keySequence == "2580" && acceptCard == true) || (enterCode == true)) {
         //Code is correct
         Serial.println("### User Authenticated");
         keySequence = "";
@@ -252,17 +256,26 @@ void printBits() {
       Serial.print(facilityCode);
       Serial.print(", CardCc = ");
       Serial.println(cardCode);
+      keySequence = ""; // Make sure that we get fresh numbers
 
-
-      digitalWrite(LED_GREEN, LOW); // Red
-      
- //Set your accepted card code here
-      if(cardCode == 00000){
-
-         
-        acceptCard = true;
+      if(cardCode == 00000){ //Set your accepted card code here
         Serial.println("Card Accepted");
-
+        if (enterCode == true) {
+        acceptCard = true;
+        } else {
+          Serial.println("### User Authenticated");
+          digitalWrite(BEEP_BEEP, LOW);
+          //Make Color Green
+          digitalWrite(LED_RED, HIGH);
+          digitalWrite(LED_GREEN, LOW);
+  
+          
+          delay(1000);
+          digitalWrite(BEEP_BEEP, HIGH);
+          //Make Color Red
+          digitalWrite(LED_GREEN, HIGH);  // Green Off
+          digitalWrite(LED_RED, LOW);  // Red Back On
+        }
       } else {
         acceptCard = false;
         Serial.println("Card not accepted. Reset Vars");
